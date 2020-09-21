@@ -1,10 +1,15 @@
-from datetime import datetime, timedelta
-import datetime
-from bs4 import BeautifulSoup
-import requests
-import pandas as pd
-import re
-import json 
+
+try:
+    from datetime import datetime, timedelta
+    import datetime
+    from bs4 import BeautifulSoup
+    import requests
+    import pandas as pd
+    import re
+    import json
+except ModuleNotFoundError as a:
+    print(a , ", please install the module!")
+    
 
 class news():                       # 뉴스를 가져오는 Class
     
@@ -18,7 +23,7 @@ class news():                       # 뉴스를 가져오는 Class
         self.modify_time = []
         self.contents = []
         self.like = []
-        self.url = []
+        self.art_url = []
 
 
     def make_date(self, start: str, end: str) -> list:          # 가져 올 뉴스의 날짜를 생성
@@ -66,7 +71,7 @@ class news():                       # 뉴스를 가져오는 Class
         self.modify_time.append(modify_time)
         self.contents.append(contents)
         self.like.append(like)
-        self.url.append(article_url)
+        self.art_url.append(article_url)
 
     def get_page_url(self, section) -> list:         # 원하는 섹션의 지정 날짜 페이지 및 기사 url 들고오기
         """
@@ -96,7 +101,7 @@ class news():                       # 뉴스를 가져오는 Class
         self.data['modify_time'] = self.modify_time
         self.data['contents'] = self.contents
         self.data['like'] = self.like
-        self.data['url'] = self.url
+        self.data['url'] = self.art_url
         data = pd.DataFrame(self.data)
         print('csv 제작중...')
         data.to_csv("daum_crawler.csv", mode='w', encoding='utf-8-sig')
@@ -112,8 +117,66 @@ class news():                       # 뉴스를 가져오는 Class
 class comment():                    # 댓글을 가져오는 Class
 
     def __init__ (self):
-        pass
+        self.token = ''
+        self.articleNum = ''
+        self.cmt_data = {}
+        self.comment = []
+        self.comment_writer_nickname = []
+        self.Time = []
+        self.sympathy = []
+        self.antipathy = []
+    
+    def make_token(self, url: str):       # 다음은 토큰이 있어야 기사의 댓글을 수집할 수 있음
+        self.articleNum = url.split('/')[-1]
+        page_move = requests.get(url)
+        page_move = BeautifulSoup(page_move.content, "html.parser")
+        get_token = page_move.select('div.alex-area')[0]['data-client-id']
+        get_token = 'https://comment.daum.net/oauth/token?grant_type=alex_credentials&client_id=' + get_token
+        get_token = requests.get(get_token, headers = {'referer': url}).json()
+        self.token = "bearer"+get_token['access_token']      # token
 
+    def get_comment(self):
+        start_num = 0
+        while 1:
+            comment_url = 'https://comment.daum.net/apis/v1/posts/@'+str(self.articleNum)+'/comments?offset='+str(start_num)+'&limit=100&sort=RECOMMEND'
+            get_comments = requests.get(comment_url, headers={"Authorization":self.token}).json()
+            if not get_comments:        # 댓글이 없으면 break
+                break
+            start_num = start_num + 100         # 댓글 100개씩 수집
+            for comments in get_comments:
+                try:
+                    self.comment.append(comments['content'])
+                except TypeError:               # 댓글이 없을 경우 빈 내용으로 채우기
+                    self.comment.append('')
+                    self.comment_writer_nickname.append('')
+                    self.Time.append('')
+                    self.sympathy.append('')
+                    self.antipathy.append('')
+                    break
+                self.comment_writer_nickname.append(comments['user']['displayName'])
+                self.Time.append(comments['createdAt'])
+                self.sympathy.append(comments['likeCount'])
+                self.antipathy.append(comments['dislikeCount'])
+    
+    def make_csv(self):     # csv로 저장
+        self.cmt_data['comment'] = self.comment
+        self.cmt_data['comment_writer_nickname'] = self.comment_writer_nickname
+        self.cmt_data['Time'] = self.Time
+        self.cmt_data['sympathy'] = self.sympathy
+        self.cmt_data['antipathy'] = self.antipathy
+        data = pd.DataFrame(self.cmt_data)
+        print('csv 제작중...')
+        data.to_csv("daum_comment.csv", mode='w', encoding='utf-8-sig')
+        print('csv 제작완료!')
+
+    def run(self, url: str):
+        print('댓글을 수집하고 있습니다. 기사의 url이 다음이 아닐 경우 수집이 진행되지 않습니다.')
+        try:
+            self.make_token(url)
+        except:
+            print('기사의 url이 잘못되었습니다.')            
+        self.get_comment()
+        self.make_csv()
 
 
 
@@ -124,5 +187,10 @@ if __name__ == "__main__":              #직접 실행할 경우에만 if문 발
     section = 'IT'                      # 기사의 섹션으로는 IT, 정치, 사회, 경제 등. 전체를 수집할 수도 있음
     daum = news()
     daum.run(start, end, section)
-    value = input('기사의 댓글도 수집할까요? (네/아니오')
-    print('댓글 수집중' if value == '네' else '크롤링을 종료합니다')
+    value = input('기사의 댓글도 수집할까요? (네/아니오)')
+    if value == '네':
+        url = input('댓글을 수집할 기사 url을 입력해주세요.(ex-https://news.v.daum.net/)')
+        cmt = comment()
+        cmt.run(url)
+    else:
+        print('크롤링을 종료합니다')
