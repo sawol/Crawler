@@ -48,9 +48,7 @@ class news():                       # 뉴스를 가져오는 Class
         articleNum = article_url.split('/')[-1]     # 기사 번호(좋아요 수, 댓글 가져올때 사용됨)
         article_html = self.get_bs(article_url)
         title = article_html.find('h3', class_='tit_view').text    # 기사 제목
-        print(article_url)
         write_time = article_html.find('span', class_='num_date').text
-        print(write_time)
         # write_time = write_time.replace('입력 ', '')
         write_time = str(datetime.datetime.strptime(write_time, "%Y.%m.%d. %H:%M"))      # 기사 작성시간
         try:
@@ -182,9 +180,11 @@ class comment():                    # 댓글을 가져오는 Class
 
 if __name__ == "__main__":              #직접 실행할 경우에만 if문 발동! 해당 코드를 모듈로 사용했을때와 구분짓기 위해 사용
     print('다음 뉴스 크롤러입니다.')
-    start = '2020-09-06 09:00:00'
-    end = '2020-09-06 08:10:00'
-    section = 'IT'                      # 기사의 섹션으로는 IT, 정치, 사회, 경제 등. 전체를 수집할 수도 있음
+    start = input('수집하고자 하는 시작날짜를 입력하세요(ex-2020-09-06)')
+    end = input('수집하고자 하는 끝날짜를 입력하세요(ex-2020-09-06)')
+    start = start + ' 09:00:00'
+    end = end + ' 09:10:00'
+    section = input('수집하고자 하는 기사 섹션을 선택하세요(사회/정치/경제/연예/IT/전체 중 택 1)')                      # 기사의 섹션으로는 IT, 정치, 사회, 경제 등. 전체를 수집할 수도 있음
     daum = news()
     daum.run(start, end, section)
     value = input('기사의 댓글도 수집할까요? (네/아니오)')
