@@ -13,9 +13,8 @@ class Article:
     """
     기사 url / 기사 제목 / 입력 시간 / 기사 내용 /
     """
-    url: str
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url: str = url
         self.article: Dict[str,str] = {'url': self.url, 'title': None, 'create date': None, 'content': None}
         self.soup: str = ''
