@@ -13,10 +13,9 @@ class Comments:
     """
     댓글 작성자 / 댓글 내용 / 댓글 작성 시간 / 좋아요 수 / 싫어요 수
     """
-    article_url: str
 
-    def __init__(self, url):
-        self.article_url = url
+    def __init__(self, url: str):
+        self.article_url: str = url
         self.token: str = ''
         self.comment_html: str = ''
         self.comments: List[dict] = []
