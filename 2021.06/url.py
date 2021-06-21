@@ -10,8 +10,6 @@ except ModuleNotFoundError as a:
 
 
 class URL:
-    category: str
-    date: str
 
     def __init__(self, category, date):
         self.category = category
