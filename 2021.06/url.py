@@ -11,9 +11,9 @@ except ModuleNotFoundError as a:
 
 class URL:
 
-    def __init__(self, category, date):
-        self.category = category
-        self.date = date
+    def __init__(self, category: str, date: str):
+        self.category: str = category
+        self.date: str = date
         self._page_urls = []
         self. news_urls = []
 
